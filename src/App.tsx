@@ -1,11 +1,13 @@
 import './App.css';
+import Todo from './Containers/Todo/Todo.tsx';
 
 const App = () => {
   return (
     <>
-     I'm starting my home work #68! ^_^
+     <Todo/>
     </>
   );
 };
 
 export default App;
+

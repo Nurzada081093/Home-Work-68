@@ -37,6 +37,12 @@ export const fetchToDoList = createAsyncThunk('todo/fetchToDoList', async () => 
   }
 });
 
+export const deleteToDoTask = createAsyncThunk<void, string, {state: RootState}>('todo/deleteToDoTask', async (_arg, thunkAPI) => {
+ if ( thunkAPI) {
+   await axiosRequest.delete(`todo/${_arg}.json`);
+ }
+});
+
 
 export const todoSlice = createSlice({
   name: 'todo',
@@ -48,11 +54,6 @@ export const todoSlice = createSlice({
         status: action.payload.status,
       });
     },
-
-    // getStatus: (state) => {
-    //   state.status = true;
-    // },
-
   },
   extraReducers: (builder) => {
     builder
@@ -78,6 +79,17 @@ export const todoSlice = createSlice({
         state.loading = false;
       })
       .addCase(sentToDoList.rejected, (state) => {
+        state.loading = false;
+        state.error = true;
+      })
+      .addCase(deleteToDoTask.pending, (state) => {
+        state.loading = true;
+        state.error = false;
+      })
+      .addCase(deleteToDoTask.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(deleteToDoTask.rejected, (state) => {
         state.loading = false;
         state.error = true;
       });

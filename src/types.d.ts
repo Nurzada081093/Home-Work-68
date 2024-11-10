@@ -1,6 +1,7 @@
 export interface TaskState {
   title: string;
   status: boolean;
+  id?: string;
 }
 
 export interface TodoState {

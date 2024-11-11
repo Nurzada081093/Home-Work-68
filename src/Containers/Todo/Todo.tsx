@@ -1,6 +1,13 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../app/store.ts';
-import { createTask, deleteToDoTask, fetchToDoList, sentToDoList } from './todoSlice.ts';
+import {
+  changeStatusInAPI,
+  changStatus,
+  createTask,
+  deleteToDoTask,
+  fetchToDoList,
+  sentToDoList
+} from './todoSlice.ts';
 import { useEffect, useState } from 'react';
 import * as React from 'react';
 import { toast } from 'react-toastify';
@@ -52,13 +59,19 @@ const Todo = () => {
     await dispatch(fetchToDoList());
   };
 
+  const changeTaskStatus = async (id: string) => {
+    dispatch(changStatus(id));
+    await dispatch(changeStatusInAPI(id));
+    await dispatch(fetchToDoList());
+  };
+
   const tasks = todoTasks.map((task) => {
     const taskId = task.id || String(new Date());
     return (
       <div className="card mb-3" key={taskId}>
         <div className="card-body d-flex justify-content-between align-items-center">
           <div>
-            <input type="checkbox" style={{width: '20px', height: '20px'}}/>
+            <input type="checkbox" checked={task.status} style={{width: '20px', height: '20px'}} onChange={() => changeTaskStatus(taskId)}/>
           </div>
           <div>{task.title}</div>
           <div>

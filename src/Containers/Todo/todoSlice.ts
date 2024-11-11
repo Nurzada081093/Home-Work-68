@@ -43,6 +43,13 @@ export const deleteToDoTask = createAsyncThunk<void, string, {state: RootState}>
  }
 });
 
+export const changeStatusInAPI = createAsyncThunk<void, string, {state: RootState}>('todo,changeStatusInAPI', async (_arg, thunkAPI) => {
+  const dataFromState = thunkAPI.getState().todo.todo;
+  const task = dataFromState.find((task) => task.id === _arg);
+
+  await axiosRequest.put(`todo/${_arg}.json`, task);
+});
+
 
 export const todoSlice = createSlice({
   name: 'todo',
@@ -53,6 +60,14 @@ export const todoSlice = createSlice({
         title: action.payload.title,
         status: action.payload.status,
       });
+    },
+
+    changStatus: (state, action: PayloadAction<string>) => {
+      const taskToCheck = state.todo.find((task) => task.id === action.payload);
+
+      if (taskToCheck) {
+        taskToCheck.status = true;
+      }
     },
   },
   extraReducers: (builder) => {
@@ -92,10 +107,21 @@ export const todoSlice = createSlice({
       .addCase(deleteToDoTask.rejected, (state) => {
         state.loading = false;
         state.error = true;
+      })
+      .addCase(changeStatusInAPI.pending, (state) => {
+        state.loading = true;
+        state.error = false;
+      })
+      .addCase(changeStatusInAPI.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(changeStatusInAPI.rejected, (state) => {
+        state.loading = false;
+        state.error = true;
       });
   }
 });
 
 export const todoReducer = todoSlice.reducer;
-export const {createTask} = todoSlice.actions;
+export const {createTask, changStatus} = todoSlice.actions;
 

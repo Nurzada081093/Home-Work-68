@@ -2,52 +2,70 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import axiosRequest from '../../axiosRequest.ts';
 import { RootState } from '../../app/store.ts';
 import { TaskFromAPI, TaskState, TodoState } from '../../types';
+import { toast } from 'react-toastify';
 
 const initialState: TodoState = {
   todo: [],
   loading: false,
   error: false,
+  sentLoading: false,
+  deleteLoading: false,
 };
 
 export const sentToDoList = createAsyncThunk<void, {title: string, status: boolean}, {state: RootState}>('todo/sentToDoList', async (_arg, thunkAPi) => {
-  const dataFromState = thunkAPi.getState().todo.todo;
+  try {
+    const dataFromState = thunkAPi.getState().todo.todo;
 
-  let taskObject: TaskState | null = null;
+    let taskObject: TaskState | null = null;
 
-  dataFromState.forEach((task) => {
-    taskObject = {
-      title: task.title,
-      status: task.status,
-    };
-  });
+    dataFromState.forEach((task) => {
+      taskObject = {
+        title: task.title,
+        status: task.status,
+      };
+    });
 
-  await axiosRequest.post('todo.json', taskObject);
+    await axiosRequest.post('todo.json', taskObject);
+  } catch (e) {
+    toast.error(`${e}`);
+  }
 });
 
 export const fetchToDoList = createAsyncThunk('todo/fetchToDoList', async () => {
-  const response: {data: TaskFromAPI} = await axiosRequest<TaskFromAPI>('todo.json');
+  try {
+    const response: {data: TaskFromAPI} = await axiosRequest<TaskFromAPI>('todo.json');
 
-  if (response.data) {
-    return Object.keys(response.data).map((postInfo) => {
-      return {
-        ...response.data[postInfo],
-        id: postInfo,
-      };
-    });
+    if (response.data) {
+      return Object.keys(response.data).map((postInfo) => {
+        return {
+          ...response.data[postInfo],
+          id: postInfo,
+        };
+      });
+    }
+  } catch (e) {
+    toast.error(`${e}`);
   }
 });
 
 export const deleteToDoTask = createAsyncThunk<void, string, {state: RootState}>('todo/deleteToDoTask', async (_arg, thunkAPI) => {
- if ( thunkAPI) {
-   await axiosRequest.delete(`todo/${_arg}.json`);
- }
+  try {
+    if ( thunkAPI) {
+      await axiosRequest.delete(`todo/${_arg}.json`);
+    }
+  } catch (e) {
+    toast.error(`${e}`);
+  }
 });
 
 export const changeStatusInAPI = createAsyncThunk<void, string, {state: RootState}>('todo,changeStatusInAPI', async (_arg, thunkAPI) => {
-  const dataFromState = thunkAPI.getState().todo.todo;
-  const task = dataFromState.find((task) => task.id === _arg);
-
-  await axiosRequest.put(`todo/${_arg}.json`, task);
+  try {
+    const dataFromState = thunkAPI.getState().todo.todo;
+    const task = dataFromState.find((task) => task.id === _arg);
+    await axiosRequest.put(`todo/${_arg}.json`, task);
+  } catch (e) {
+    toast.error(`${e}`);
+  }
 });
 
 
@@ -66,8 +84,16 @@ export const todoSlice = createSlice({
       const taskToCheck = state.todo.find((task) => task.id === action.payload);
 
       if (taskToCheck) {
-        taskToCheck.status = true;
+        taskToCheck.status = !taskToCheck.status;
       }
+    },
+
+    removeItem: (state, action: PayloadAction<string>) => {
+      state.todo = state.todo.filter(task => task.id !== action.payload);
+    },
+
+    emptyTodoList: (state) => {
+      state.todo = [];
     },
   },
   extraReducers: (builder) => {
@@ -87,25 +113,25 @@ export const todoSlice = createSlice({
         state.error = true;
       })
       .addCase(sentToDoList.pending, (state) => {
-        state.loading = true;
+        state.sentLoading = true;
         state.error = false;
       })
       .addCase(sentToDoList.fulfilled, (state) => {
-        state.loading = false;
+        state.sentLoading = false;
       })
       .addCase(sentToDoList.rejected, (state) => {
-        state.loading = false;
+        state.sentLoading = false;
         state.error = true;
       })
       .addCase(deleteToDoTask.pending, (state) => {
-        state.loading = true;
+        state.deleteLoading = true;
         state.error = false;
       })
       .addCase(deleteToDoTask.fulfilled, (state) => {
-        state.loading = false;
+        state.deleteLoading = false;
       })
       .addCase(deleteToDoTask.rejected, (state) => {
-        state.loading = false;
+        state.deleteLoading = false;
         state.error = true;
       })
       .addCase(changeStatusInAPI.pending, (state) => {
@@ -123,5 +149,5 @@ export const todoSlice = createSlice({
 });
 
 export const todoReducer = todoSlice.reducer;
-export const {createTask, changStatus} = todoSlice.actions;
+export const {createTask, changStatus, removeItem, emptyTodoList} = todoSlice.actions;
 
